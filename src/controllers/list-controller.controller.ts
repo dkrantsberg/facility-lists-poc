@@ -136,12 +136,38 @@ export class ListControllerController {
     responses: {
       '200': {
         description: 'Add field to a list',
-        content: {'application/json': {schema: {'x-ts-type': ListField}}},
+        content: {'application/json': {schema: {'x-ts-type': ListItem}}},
       },
     },
   })
   async addItem(@param.path.string('listName') listName: string, @requestBody() listItem: ListItem): Promise<ListItem> {
     const listItemRepository = await this.listRepository.getListItemRepository(listName);
     return await listItemRepository.create(listItem);
+  }
+
+
+  @get('/lists/{listName}/items', {
+    responses: {
+      '200': {
+        description: 'Array of ListItem model instances',
+        content: {
+          'application/json': {
+            schema: {type: 'array', items: {'x-ts-type': List}},
+          },
+        },
+      },
+    },
+  })
+  async findItem(
+    @param.path.string('listName') listName: string,
+    @param.query.object('filter', getFilterSchemaFor(ListItem)) filter?: Filter): Promise<ListItem[]> {
+    const listItemRepository = await this.listRepository.getListItemRepository(listName);
+    const result = await listItemRepository.find(filter);
+
+
+    for(let item of result) {
+      Object.setPrototypeOf(item, Object);
+    }
+    return result;
   }
 }
